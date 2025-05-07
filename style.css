@@ -27,16 +27,15 @@ body {
 #timersContainer {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
     gap: 20px;
-    align-items: flex-start;
-    justify-content: flex-start;
     margin-bottom: 20px;
     padding-left: 0;
     padding-right: 0;
     width: 100%;
-    max-width: 1200px;
+    max-width: 80%;
     box-sizing: border-box;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .timer-container {
