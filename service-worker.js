@@ -1,3 +1,4 @@
+const VERSION = '1.0.1';
 const CACHE_NAME = 'meus-cronometros-cache-v1';
 const urlsToCache = [
     './',
