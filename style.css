@@ -10,20 +10,8 @@ body {
     box-sizing: border-box;
 }
 
-#buttonsContainer {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: 20px;
-    margin-left: auto;
-    margin-right: auto;
-    gap: 10px;
-    width: 100%;
-    max-width: 80%;
-    box-sizing: border-box;
-    padding-right: 20px;
-    padding-bottom: 20px;
-}
 
+#buttonsContainer,
 #timersContainer {
     display: flex;
     flex-direction: row;
