@@ -1,0 +1,125 @@
+body {
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-top: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+#buttonsContainer {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    gap: 10px;
+    width: 100%;
+    max-width: 1200px;
+    box-sizing: border-box;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
+
+#timersContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    max-width: 1200px;
+    box-sizing: border-box;
+}
+
+.timer-container {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    width: auto;
+}
+
+.timer-name-input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.timer-title {
+    font-size: 1.2em;
+    margin-top: 5px;
+}
+
+.timer-display {
+    font-size: 1.8em;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 0;
+}
+
+.start-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.pause-button {
+    background-color: #f44336;
+    color: white;
+    display: none;
+}
+
+.reset-button {
+    background-color: #008CBA;
+    color: white;
+}
+
+.remove-button {
+    background-color: #ff9800;
+    color: white;
+}
+
+#addTimerButton,
+#saveTimersButton {
+    background-color: #2196F3;
+    color: white;
+}
+
+#saveTimersButton {
+    background-color: #ffc107;
+    color: black;
+}
+
+#clearStorageButton {
+    background-color: #9e9e9e;
+    color: white;
+}
+
+#clearUnusedTimersButton {
+    background-color: #6c757d;
+    color: white;
+}
