@@ -12,57 +12,60 @@ if ('serviceWorker' in navigator) {
 
 const timersContainer = document.getElementById('timersContainer');
 const addTimerButton = document.getElementById('addTimerButton');
-const saveTimersButton = document.getElementById('saveTimersButton');
 const clearStorageButton = document.getElementById('clearStorageButton');
 const clearUnusedTimersButton = document.getElementById('clearUnusedTimersButton');
+const versionInfoButton = document.getElementById('versionInfoButton');
+const versionInfoPopup = document.getElementById('versionInfoPopup');
+const closeButton = document.querySelector('.close-button');
 
 let timerIdCounter = 0;
-const activeIntervals = {};
+let activeIntervals = {};
 let currentlyActiveTimerId = null;
-const timerStates = {};
-const STORAGE_KEY = 'myTimersState';
+let timerStates = {};
+const STORAGE_KEY = 'MultiTimeTrackerTimersState';
 
 function createTimer(savedState) {
     timerIdCounter++;
-    const timerId = savedState ? savedState.id : `timer-${timerIdCounter}`;
-    const container = document.createElement('div');
+    let timerId = savedState ? savedState.id : `timer-${timerIdCounter}`;
+    let container = document.createElement('div');
     container.classList.add('timer-container');
     container.id = timerId;
 
-    const nameInput = document.createElement('input');
+    let nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.classList.add('timer-name-input');
     nameInput.value = savedState ? savedState.name : `Cronômetro ${timerIdCounter}`;
+    const initialName = nameInput.value; // Salva o nome inicial
 
-    const title = document.createElement('h2');
+    let title = document.createElement('h2');
     title.classList.add('timer-title');
     title.textContent = nameInput.value;
 
-    const display = document.createElement('div');
+    let display = document.createElement('div');
     display.classList.add('timer-display');
     display.textContent = '00:00:00';
 
-    const controls = document.createElement('div');
+    let controls = document.createElement('div');
     controls.classList.add('controls');
 
-    const startButton = document.createElement('button');
+    let startButton = document.createElement('button');
     startButton.textContent = savedState && savedState.startTimeOrigin ? 'Retomar' : 'Iniciar';
     startButton.classList.add('start-button');
     startButton.dataset.timerId = timerId;
     startButton.style.display = 'inline-block';
 
-    const pauseButton = document.createElement('button');
+    let pauseButton = document.createElement('button');
     pauseButton.textContent = 'Pausar';
     pauseButton.classList.add('pause-button');
     pauseButton.dataset.timerId = timerId;
     pauseButton.style.display = savedState && savedState.startTimeOrigin ? 'inline-block' : 'none';
 
-    const resetButton = document.createElement('button');
+    let resetButton = document.createElement('button');
     resetButton.textContent = 'Resetar';
     resetButton.classList.add('reset-button');
     resetButton.dataset.timerId = timerId;
 
-    const removeButton = document.createElement('button');
+    let removeButton = document.createElement('button');
     removeButton.textContent = 'Remover';
     removeButton.classList.add('remove-button');
     removeButton.dataset.timerId = timerId;
@@ -83,16 +86,17 @@ function createTimer(savedState) {
     let startTime = null;
     let pausedTime = savedState ? savedState.pausedTime || 0 : 0;
     let intervalId = null;
-    timerStates[timerId] = { container, startTime, pausedTime, intervalId, nameInput, title, display };
+    timerStates[timerId] = { container, startTime, pausedTime, intervalId, nameInput, title, display, initialName }; // Salva initialName
 
     nameInput.addEventListener('input', function () {
         title.textContent = this.value;
+        saveAllTimers(); // Garante que o nome atual seja salvo
     });
 
     startButton.addEventListener('click', function () {
-        const timerId = this.dataset.timerId;
+        let timerId = this.dataset.timerId;
         pauseAllOtherTimers(timerId);
-        const state = timerStates[timerId];
+        let state = timerStates[timerId];
         if (!state.startTime) {
             state.startTime = Date.now();
             this.style.display = 'none';
@@ -103,11 +107,12 @@ function createTimer(savedState) {
             currentlyActiveTimerId = timerId;
             this.textContent = 'Retomar';
         }
+        saveAllTimers();
     });
 
     pauseButton.addEventListener('click', function () {
-        const timerId = this.dataset.timerId;
-        const state = timerStates[timerId];
+        let timerId = this.dataset.timerId;
+        let state = timerStates[timerId];
         if (state.startTime) {
             state.pausedTime += (Date.now() - state.startTime);
             clearInterval(state.intervalId);
@@ -117,11 +122,12 @@ function createTimer(savedState) {
             this.style.display = 'none';
             currentlyActiveTimerId = null;
         }
+        saveAllTimers();
     });
 
     resetButton.addEventListener('click', function () {
-        const timerId = this.dataset.timerId;
-        const state = timerStates[timerId];
+        let timerId = this.dataset.timerId;
+        let state = timerStates[timerId];
         clearInterval(state.intervalId);
         delete activeIntervals[timerId];
         state.startTime = null;
@@ -133,11 +139,12 @@ function createTimer(savedState) {
         if (currentlyActiveTimerId === timerId) {
             currentlyActiveTimerId = null;
         }
+        saveAllTimers();
     });
 
     removeButton.addEventListener('click', function () {
-        const timerId = this.dataset.timerId;
-        const timerName = timerStates[timerId].nameInput.value || `Cronômetro ${timerId.split('-')[1]}`;
+        let timerId = this.dataset.timerId;
+        let timerName = timerStates[timerId].nameInput.value || `Cronômetro ${timerId.split('-')[1]}`;
         if (confirm(`Tem certeza que deseja remover o cronômetro "${timerName}"?`)) {
             clearInterval(timerStates[timerId].intervalId);
             delete activeIntervals[timerId];
@@ -148,18 +155,19 @@ function createTimer(savedState) {
                 currentlyActiveTimerId = null;
             }
         }
+        saveAllTimers();
     });
 
     function updateTimerDisplay(timerId) {
-        const state = timerStates[timerId];
+        let state = timerStates[timerId];
         if (state) {
-            const currentTime = state.startTime ? Date.now() - state.startTime + state.pausedTime : state.pausedTime;
+            let currentTime = state.startTime ? Date.now() - state.startTime + state.pausedTime : state.pausedTime;
             updateDisplay(currentTime, timerId);
         }
     }
 
     function updateDisplay(totalMilliseconds, timerId) {
-        const displayElement = timerStates[timerId].display;
+        let displayElement = timerStates[timerId].display;
         displayElement.textContent = formatTime(totalMilliseconds);
     }
 
@@ -182,56 +190,58 @@ function createTimer(savedState) {
 }
 
 function pauseAllOtherTimers(currentTimerId) {
-    for (const timerId in timerStates) {
+    for (let timerId in timerStates) {
         if (timerId !== currentTimerId) {
-            const state = timerStates[timerId];
+            let state = timerStates[timerId];
             if (state.startTime) {
                 state.pausedTime = Date.now() - state.startTime;
                 clearInterval(state.intervalId);
                 delete activeIntervals[timerId];
                 state.startTime = null;
-                const startButton = state.container.querySelector('.start-button');
-                const pauseButton = state.container.querySelector('.pause-button');
+                let startButton = state.container.querySelector('.start-button');
+                let pauseButton = state.container.querySelector('.pause-button');
                 startButton.style.display = 'inline-block';
                 pauseButton.style.display = 'none';
             }
         }
     }
     currentlyActiveTimerId = currentTimerId;
+    saveAllTimers();
 }
 
 function formatTime(totalMilliseconds) {
-    const totalSeconds = Math.floor(totalMilliseconds / 1000);
-    const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
-    const minutes = Math.floor((totalSeconds / 60) % 60).toString().padStart(2, '0');
-    const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+    let totalSeconds = Math.floor(totalMilliseconds / 1000);
+    let seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+    let minutes = Math.floor((totalSeconds / 60) % 60).toString().padStart(2, '0');
+    let hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
     return `${hours}:${minutes}:${seconds}`;
 }
 
 function updateRemoveButtonsState() {
-    const removeButtons = document.querySelectorAll('.remove-button');
+    let removeButtons = document.querySelectorAll('.remove-button');
     removeButtons.forEach(button => {
         button.disabled = timersContainer.children.length <= 1;
     });
 }
 
-addTimerButton.addEventListener('click', function () {
-    createTimer();
-});
-
-saveTimersButton.addEventListener('click', function () {
-    const timersData = [];
-    for (const timerId in timerStates) {
-        const state = timerStates[timerId];
+function saveAllTimers(){
+    let timersData = [];
+    for (let timerId in timerStates) {
+        let state = timerStates[timerId];
         timersData.push({
             id: timerId,
             name: state.nameInput.value,
             pausedTime: state.pausedTime,
-            startTimeOrigin: state.startTime ? state.startTime : null // Salva o startTime original
+            startTimeOrigin: state.startTime ? state.startTime : null,
+            initialName: state.initialName
         });
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(timersData));
-    alert('Estado dos cronômetros salvo!');
+}
+
+addTimerButton.addEventListener('click', function () {
+    createTimer();
+    saveAllTimers();
 });
 
 clearStorageButton.addEventListener('click', function () {
@@ -240,44 +250,67 @@ clearStorageButton.addEventListener('click', function () {
 });
 
 clearUnusedTimersButton.addEventListener('click', function () {
-    const unusedTimers = [];
-    for (const timerId in timerStates) {
-        if (timerStates[timerId].display.textContent === '00:00:00' && !timerStates[timerId].startTime) {
-            unusedTimers.push(timerStates[timerId].nameInput.value || `Cronômetro ${timerId.split('-')[1]}`);
+    let unusedTimers = [];
+
+    for (let timerId in timerStates) {
+        const state = timerStates[timerId];
+        const isDefaultName = state.nameInput.value === state.initialName;
+        const isZeroed = state.display.textContent === '00:00:00';
+        const neverStarted = !state.startTime;
+
+        if (isZeroed && neverStarted && isDefaultName) {
+            unusedTimers.push(state.nameInput.value || `Cronômetro ${timerId.split('-')[1]}`);
         }
     }
 
     if (unusedTimers.length > 0) {
-        const confirmationMessage = `Tem certeza que deseja remover os seguintes cronômetros não utilizados?\n- ${unusedTimers.join('\n- ')}`;
+        let confirmationMessage = `Tem certeza que deseja remover os seguintes cronômetros não utilizados?\n- ${unusedTimers.join('\n- ')}`;
         if (confirm(confirmationMessage)) {
-            const timersToRemove = Object.keys(timerStates).filter(timerId =>
-                timerStates[timerId].display.textContent === '00:00:00' && !timerStates[timerId].startTime
-            );
+            let timersToRemove = Object.keys(timerStates).filter(timerId => {
+                const state = timerStates[timerId];
+                const isDefaultName = state.nameInput.value === state.initialName;
+                const isZeroed = state.display.textContent === '00:00:00';
+                const neverStarted = !state.startTime;
+                return isZeroed && neverStarted && isDefaultName;
+            });
             timersToRemove.forEach(timerId => {
-                const containerToRemove = timerStates[timerId].container;
+                let containerToRemove = timerStates[timerId].container;
                 clearInterval(timerStates[timerId].intervalId);
                 delete activeIntervals[timerId];
                 delete timerStates[timerId];
                 containerToRemove.remove();
             });
             updateRemoveButtonsState();
+
+            if (Object.keys(timerStates).length === 0) {
+                createTimer();
+            }
+            saveAllTimers();
         }
     } else {
-        alert('Não há cronômetros não utilizados para limpar.');
+        alert('Não há cronômetros não utilizados para limpar (apenas cronômetros zerados, nunca iniciados e com o nome padrão).');
     }
 });
 
+versionInfoButton.addEventListener('click', () => {
+    versionInfoPopup.style.display = 'flex';
+});
+
+closeButton.addEventListener('click', () => {
+    versionInfoPopup.style.display = 'none';
+});
+
 window.addEventListener('load', function () {
-    const savedTimers = localStorage.getItem(STORAGE_KEY);
+    let savedTimers = localStorage.getItem(STORAGE_KEY);
     timerIdCounter = 0;
     timersContainer.innerHTML = '';
 
     if (savedTimers) {
-        const parsedTimers = JSON.parse(savedTimers);
+        let parsedTimers = JSON.parse(savedTimers);
         if (parsedTimers && parsedTimers.length > 0) {
             parsedTimers.forEach(timerData => {
                 createTimer(timerData);
-                const idNumber = parseInt(timerData.id.split('-')[1]);
+                let idNumber = parseInt(timerData.id.split('-')[1]);
                 if (!isNaN(idNumber)) {
                     timerIdCounter = Math.max(timerIdCounter, idNumber);
                 }
@@ -290,4 +323,11 @@ window.addEventListener('load', function () {
         createTimer();
     }
     updateRemoveButtonsState();
+    saveAllTimers();
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === versionInfoPopup) {
+        versionInfoPopup.style.display = 'none';
+    }
 });

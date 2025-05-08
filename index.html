@@ -13,14 +13,30 @@
 </head>
 
 <body>
+    <div id="versionInfoContainer">
+        <button id="versionInfoButton" title="Informações da Versão">📣</button>
+    </div>
+
     <h1>Meus timers</h1>
     <div id="buttonsContainer">
-        <button id="addTimerButton">Novo Timer</button>
-        <button id="saveTimersButton">Salvar Timers</button>
-        <button id="clearStorageButton">Limpar timers salvos</button>
-        <button id="clearUnusedTimersButton">Limpar Não Utilizados</button>
+        <button id="addTimerButton" title="Cria um novo cronômetro">Novo Timer</button>
+        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers salvos</button>
+        <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
     </div>
     <div id="timersContainer">
+    </div>
+
+    <div id="versionInfoPopup" class="popup">
+        <div class="popup-content">
+            <span class="close-button">&times;</span>
+            <h2>Informações da Versão</h2>
+            <p>Versão Atual: 1.1a</p>
+            <h3>Detalhes da Versão:</h3>
+            <ul>
+                <li>Os timers são automaticamente salvos a cada interação com qualquer botão na tela (exceto o de novidades).</li>
+                <li>Ao limpar os timers não utilizados agora irá manter ao menos um timer na tela, mesmo que seja um novo.</li>
+            </ul>
+        </div>
     </div>
 
     <script src="scripts.js"></script>
