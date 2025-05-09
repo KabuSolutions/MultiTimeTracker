@@ -22,16 +22,24 @@
         <button id="addTimerButton" title="Cria um novo cronômetro">Novo Timer</button>
         <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers salvos</button>
         <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
+        <div id="totalTimeContainer" class="timer-container">
+            <div class="timer-display" id="totalTimeDisplay">00:00:00</div>
+        </div>
     </div>
+    
     <div id="timersContainer">
     </div>
 
     <div id="versionInfoPopup" class="popup">
         <div class="popup-content">
             <span class="close-button">&times;</span>
-            <h2>Informações da Versão</h2>
-            <p>Versão Atual: 1.1a</p>
-            <h3>Detalhes da Versão:</h3>
+            <h2>Informações da Versão (1.1b)</h2>
+            <h3>Novidades:</h3>
+            <ul>
+                <li>Correção de timers sendo zerados ao retormar um timer antes de pausar o anterior</li>
+                <li>Adicionado timer que é a soma de todos os timers</li>
+            </ul>
+            <h3>1.1a:</h3>
             <ul>
                 <li>Os timers são automaticamente salvos a cada interação com qualquer botão na tela (exceto o de novidades).</li>
                 <li>Ao limpar os timers não utilizados agora irá manter ao menos um timer na tela, mesmo que seja um novo.</li>

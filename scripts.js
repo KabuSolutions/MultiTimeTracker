@@ -18,6 +18,14 @@ const versionInfoButton = document.getElementById('versionInfoButton');
 const versionInfoPopup = document.getElementById('versionInfoPopup');
 const closeButton = document.querySelector('.close-button');
 
+const newTimerPopup = document.getElementById('newTimerPopup');
+const closeNewTimerPopup = document.getElementById('closeNewTimerPopup');
+const createNewTimerButton = document.getElementById('createNewTimerButton');
+const cancelNewTimerButton = document.getElementById('cancelNewTimerButton');
+const newTimerNameInput = document.getElementById('newTimerNameInput');
+
+const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+
 let timerIdCounter = 0;
 let activeIntervals = {};
 let currentlyActiveTimerId = null;
@@ -108,6 +116,7 @@ function createTimer(savedState) {
             this.textContent = 'Retomar';
         }
         saveAllTimers();
+        updateTotalTimeDisplay(); // Atualiza o tempo total
     });
 
     pauseButton.addEventListener('click', function () {
@@ -123,6 +132,7 @@ function createTimer(savedState) {
             currentlyActiveTimerId = null;
         }
         saveAllTimers();
+        updateTotalTimeDisplay(); // Atualiza o tempo total
     });
 
     resetButton.addEventListener('click', function () {
@@ -140,6 +150,7 @@ function createTimer(savedState) {
             currentlyActiveTimerId = null;
         }
         saveAllTimers();
+        updateTotalTimeDisplay(); // Atualiza o tempo total
     });
 
     removeButton.addEventListener('click', function () {
@@ -156,6 +167,7 @@ function createTimer(savedState) {
             }
         }
         saveAllTimers();
+        updateTotalTimeDisplay(); // Atualiza o tempo total
     });
 
     function updateTimerDisplay(timerId) {
@@ -163,6 +175,7 @@ function createTimer(savedState) {
         if (state) {
             let currentTime = state.startTime ? Date.now() - state.startTime + state.pausedTime : state.pausedTime;
             updateDisplay(currentTime, timerId);
+            updateTotalTimeDisplay();
         }
     }
 
@@ -194,10 +207,11 @@ function pauseAllOtherTimers(currentTimerId) {
         if (timerId !== currentTimerId) {
             let state = timerStates[timerId];
             if (state.startTime) {
-                state.pausedTime = Date.now() - state.startTime;
+                state.pausedTime += (Date.now() - state.startTime);
                 clearInterval(state.intervalId);
                 delete activeIntervals[timerId];
                 state.startTime = null;
+                currentlyActiveTimerId = null;
                 let startButton = state.container.querySelector('.start-button');
                 let pauseButton = state.container.querySelector('.pause-button');
                 startButton.style.display = 'inline-block';
@@ -224,7 +238,7 @@ function updateRemoveButtonsState() {
     });
 }
 
-function saveAllTimers(){
+function saveAllTimers() {
     let timersData = [];
     for (let timerId in timerStates) {
         let state = timerStates[timerId];
@@ -239,9 +253,23 @@ function saveAllTimers(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(timersData));
 }
 
+function updateTotalTimeDisplay() {
+    let totalMilliseconds = 0;
+    for (let timerId in timerStates) {
+        let state = timerStates[timerId];
+        if (state.startTime) {
+            totalMilliseconds += (Date.now() - state.startTime + state.pausedTime);
+        } else {
+            totalMilliseconds += state.pausedTime;
+        }
+    }
+    totalTimeDisplay.textContent = formatTime(totalMilliseconds);
+}
+
 addTimerButton.addEventListener('click', function () {
     createTimer();
     saveAllTimers();
+    updateTotalTimeDisplay(); // Atualiza o tempo total
 });
 
 clearStorageButton.addEventListener('click', function () {
@@ -286,6 +314,7 @@ clearUnusedTimersButton.addEventListener('click', function () {
                 createTimer();
             }
             saveAllTimers();
+            updateTotalTimeDisplay(); // Atualiza o tempo total
         }
     } else {
         alert('Não há cronômetros não utilizados para limpar (apenas cronômetros zerados, nunca iniciados e com o nome padrão).');
@@ -324,6 +353,7 @@ window.addEventListener('load', function () {
     }
     updateRemoveButtonsState();
     saveAllTimers();
+    updateTotalTimeDisplay(); // Inicializa o tempo total na carga
 });
 
 window.addEventListener('click', (event) => {

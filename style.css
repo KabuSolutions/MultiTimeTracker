@@ -36,6 +36,8 @@ body {
     gap: 10px;
     margin-bottom: 0;
     width: auto;
+    max-width: 250px;
+    min-width: 250px;
 }
 
 .timer-name-input {
@@ -48,6 +50,10 @@ body {
 .timer-title {
     font-size: 1.2em;
     margin-top: 5px;
+    max-width: 80%;
+    min-width: 80%;
+    text-align: center;
+    overflow: hidden;
 }
 
 .timer-display {
@@ -199,4 +205,19 @@ button {
 
 .popup-content li {
     margin-bottom: 5px;
+}
+
+#totalTimeContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 10px;
+    height: 10px;
+    margin-bottom: 0;
+}
+
+#totalTimeDisplay {
+    font-size: 1.5em;
+    text-align: center;
+    margin: 0;
 }
