@@ -353,6 +353,16 @@ window.addEventListener('load', function () {
     }
     updateRemoveButtonsState();
     saveAllTimers();
+
+    // Inicializa o SortableJS após carregar os timers
+    let sortable = new Sortable(timersContainer, {
+        animation: 150, // Tempo de animação em milissegundos
+        onEnd: function (evt) {
+            updateTimerOrder();
+            saveAllTimers();
+        }
+    });
+
     updateTotalTimeDisplay(); // Inicializa o tempo total na carga
 });
 
@@ -361,3 +371,15 @@ window.addEventListener('click', (event) => {
         versionInfoPopup.style.display = 'none';
     }
 });
+
+function updateTimerOrder() {
+    let newTimerStates = {};
+    let timerElements = Array.from(timersContainer.children);
+
+    timerElements.forEach(timerElement => {
+        let timerId = timerElement.id;
+        newTimerStates[timerId] = timerStates[timerId];
+    });
+
+    timerStates = newTimerStates;
+}
