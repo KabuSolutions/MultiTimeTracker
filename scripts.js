@@ -204,7 +204,6 @@ function createTimer(savedState) {
     } else if (savedState) {
         timerStates[timerId].pausedTime = savedState.pausedTime || 0;
         display.textContent = formatTime(savedState.pausedTime || 0);
-        startButton.textContent = 'Retomar';
     }
 }
 
