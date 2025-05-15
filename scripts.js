@@ -1,6 +1,6 @@
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js')
             .then(registration => {
                 console.log('Service Worker registrado com sucesso:', registration);
             })
@@ -57,7 +57,8 @@ function createTimer(savedState) {
     controls.classList.add('controls');
 
     let startButton = document.createElement('button');
-    startButton.textContent = savedState && savedState.startTimeOrigin ? 'Retomar' : 'Iniciar';
+    startButton.textContent = (savedState && savedState.pausedTime > 0) ? 'Retomar' : 'Iniciar';
+    console.log(startButton.textContent)
     startButton.classList.add('start-button');
     startButton.dataset.timerId = timerId;
     startButton.style.display = 'inline-block';
@@ -114,6 +115,7 @@ function createTimer(savedState) {
             activeIntervals[timerId] = state.intervalId;
             currentlyActiveTimerId = timerId;
             this.textContent = 'Retomar';
+            container.classList.add('active'); // Adiciona a classe 'active'
         }
         saveAllTimers();
         updateTotalTimeDisplay(); // Atualiza o tempo total
@@ -130,6 +132,7 @@ function createTimer(savedState) {
             startButton.style.display = 'inline-block';
             this.style.display = 'none';
             currentlyActiveTimerId = null;
+            container.classList.remove('active'); // Remove a classe 'active'
         }
         saveAllTimers();
         updateTotalTimeDisplay(); // Atualiza o tempo total
@@ -146,6 +149,7 @@ function createTimer(savedState) {
         startButton.textContent = 'Iniciar';
         startButton.style.display = 'inline-block';
         pauseButton.style.display = 'none';
+        container.classList.remove('active'); // Remove a classe 'active'
         if (currentlyActiveTimerId === timerId) {
             currentlyActiveTimerId = null;
         }
@@ -195,10 +199,12 @@ function createTimer(savedState) {
         timerStates[timerId].intervalId = setInterval(() => updateTimerDisplay(timerId), 100);
         activeIntervals[timerId] = timerStates[timerId].intervalId;
         currentlyActiveTimerId = timerId;
+        container.classList.add('active'); // Adiciona a classe 'active'
         updateTimerDisplay(timerId);
     } else if (savedState) {
         timerStates[timerId].pausedTime = savedState.pausedTime || 0;
         display.textContent = formatTime(savedState.pausedTime || 0);
+        startButton.textContent = 'Retomar';
     }
 }
 
@@ -216,7 +222,10 @@ function pauseAllOtherTimers(currentTimerId) {
                 let pauseButton = state.container.querySelector('.pause-button');
                 startButton.style.display = 'inline-block';
                 pauseButton.style.display = 'none';
+                state.container.classList.remove('active'); // Remove a classe 'active' dos outros
             }
+        } else {
+            timerStates[timerId].container.classList.add('active'); // Adiciona a classe 'active' ao timer atual
         }
     }
     currentlyActiveTimerId = currentTimerId;
@@ -353,23 +362,17 @@ window.addEventListener('load', function () {
     }
     updateRemoveButtonsState();
     saveAllTimers();
-
+    updateTotalTimeDisplay(); // Inicializa o tempo total na carga
+    
     // Inicializa o SortableJS após carregar os timers
     let sortable = new Sortable(timersContainer, {
-        animation: 150, // Tempo de animação em milissegundos
+        animation: 300, // Tempo de animação em milissegundos,
+        ghostClass: 'ghost',
         onEnd: function (evt) {
             updateTimerOrder();
             saveAllTimers();
         }
     });
-
-    updateTotalTimeDisplay(); // Inicializa o tempo total na carga
-});
-
-window.addEventListener('click', (event) => {
-    if (event.target === versionInfoPopup) {
-        versionInfoPopup.style.display = 'none';
-    }
 });
 
 function updateTimerOrder() {
@@ -383,3 +386,9 @@ function updateTimerOrder() {
 
     timerStates = newTimerStates;
 }
+
+window.addEventListener('click', (event) => {
+    if (event.target === versionInfoPopup) {
+        versionInfoPopup.style.display = 'none';
+    }
+});

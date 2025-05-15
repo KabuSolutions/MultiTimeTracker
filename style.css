@@ -10,7 +10,6 @@ body {
     box-sizing: border-box;
 }
 
-
 #buttonsContainer,
 #timersContainer {
     display: flex;
@@ -38,11 +37,37 @@ body {
     width: auto;
     max-width: 250px;
     min-width: 250px;
-    transition: box-shadow 0.3s ease; /* Adiciona uma transição suave */
+    transition: box-shadow 0.3s ease; /* Adiciona transição suave */
 }
 
-.timer-container:hover {
-    box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.5); /* Efeito neon ao passar o mouse */
+.timer-container:not(.active):hover { /* Aplica o hover apenas se não estiver ativo */
+    box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.5); /* Glow azul */
+}
+
+.timer-container.active {
+    box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.75); /* Azul mais forte */
+    animation: pulse 2s infinite; /* Adiciona a animação de pulso */
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.75);
+    }
+    50% {
+        box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.4); /* Azul mais fraco no meio do pulso */
+    }
+    100% {
+        box-shadow: 0 0 10px 5px rgba(0, 191, 255, 0.75);
+    }
+}
+
+#totalTimeContainer{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    max-height: 10px;
 }
 
 .timer-name-input {
@@ -72,13 +97,13 @@ body {
 }
 
 button {
-    padding: 8px 15px;
-    border: 2px solid; /* Adiciona uma borda */
+    padding: 8px 10px;
+    border: 2px solid;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9em;
     margin-top: 0;
-    background-color: transparent; /* Remove a cor de fundo */
+    background-color: transparent;
 }
 
 .start-button {
@@ -122,26 +147,14 @@ button {
     color: white;
 }
 
-#addTimerButton,
-#saveTimersButton {
+#addTimerButton {
     border-color: #2196F3;
     color: #2196F3;
 }
 
-#addTimerButton:hover,
-#saveTimersButton:hover {
+#addTimerButton:hover {
     background-color: #2196F3;
     color: white;
-}
-
-#saveTimersButton {
-    border-color: #ffc107;
-    color: #ffc107;
-}
-
-#saveTimersButton:hover {
-    background-color: #ffc107;
-    color: black;
 }
 
 #clearStorageButton {
@@ -155,58 +168,56 @@ button {
 }
 
 #clearUnusedTimersButton {
-    border-color: #6c757d;
-    color: #6c757d;
+    border-color: red;
+    color: red;
 }
 
 #clearUnusedTimersButton:hover {
-    background-color: #6c757d;
+    background-color: red;
     color: white;
 }
 
-/* Estilos para o contêiner do botão de informações da versão */
 #versionInfoContainer {
-    position: absolute; /* Permite posicionamento absoluto dentro do body */
-    top: 20px; /* Ajuste a distância do topo conforme necessário */
-    right: 20px; /* Ajuste a distância da direita conforme necessário */
-    z-index: 1000; /* Garante que fique acima de outros elementos */
-    max-width: 1200px; /* Respeita a largura máxima dos outros containers */
-    width: calc(100% - 40px); /* Ocupa a largura total com as margens */
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 1200px;
+    width: calc(100% - 40px);
     display: flex;
-    justify-content: flex-end; /* Alinha o botão à direita dentro do container */
-    padding-right: 20px; /* Espaçamento interno direito para alinhar com os outros */
+    justify-content: flex-end;
+    padding-right: 20px;
     box-sizing: border-box;
 }
 
 #versionInfoButton {
-    background-color: #f0f0f0; /* Cor de fundo do botão */
-    color: #333; /* Cor do texto/ícone */
+    background-color: #f0f0f0;
+    color: #333;
     border: none;
-    border-radius: 50%; /* Para torná-lo arredondado */
-    width: 40px; /* Largura do botão */
-    height: 40px; /* Altura do botão */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
     font-size: 1.2em;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Uma sombra sutil */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 #versionInfoButton:hover {
     background-color: #e0e0e0;
 }
 
-/* Estilos para a pop-up */
 #versionInfoPopup {
-    display: none; /* Inicialmente escondido */
-    position: fixed; /* Fica fixo na tela */
+    display: none;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
-    z-index: 1001; /* Acima do container do botão */
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
     justify-content: center;
     align-items: center;
 }
@@ -216,10 +227,10 @@ button {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    position: relative; /* Para posicionar o botão de fechar */
+    position: relative;
     text-align: left;
-    width: 80%; /* Largura da pop-up */
-    max-width: 500px; /* Largura máxima da pop-up */
+    width: 80%;
+    max-width: 500px;
 }
 
 .close-button {
@@ -254,40 +265,6 @@ button {
     margin-bottom: 5px;
 }
 
-#newTimerPopup .popup-content {
-    text-align: center;
-    max-width: 350px;
-}
-
-#newTimerPopup input[type="text"] {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-}
-
-#newTimerPopup .popup-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-#newTimerPopup button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-}
-
-#createNewTimerButton {
-    background-color: #4CAF50;
-    color: white;
-}
-
-#cancelNewTimerButton {
-    background-color: #f44336;
-    color: white;
+.ghost {
+  opacity: 0;
 }
