@@ -1,5 +1,5 @@
-const VERSION = '1.0.1';
-const CACHE_NAME = 'meus-cronometros-cache-v1';
+const VERSION = '1.2.1'; // Aumente a versão quando atualizar os arquivos
+const CACHE_NAME = 'MultiTimeTracker-cache-v1';
 const urlsToCache = [
     './',
     './index.html',
@@ -12,10 +12,19 @@ const urlsToCache = [
 
 self.addEventListener('install', function (event) {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(function (cache) {
+        caches.keys().then(function (cacheNames) {
+            return Promise.all(
+                cacheNames.filter(function (cacheName) {
+                    return cacheName !== CACHE_NAME;
+                }).map(function (cacheName) {
+                    return caches.delete(cacheName);
+                })
+            ).then(function () {
+                return caches.open(CACHE_NAME);
+            }).then(function (cache) {
                 return cache.addAll(urlsToCache);
-            })
+            });
+        })
     );
 });
 

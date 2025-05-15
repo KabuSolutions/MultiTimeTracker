@@ -1,9 +1,6 @@
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registrado com sucesso:', registration);
-            })
             .catch(error => {
                 console.log('Erro ao registrar o Service Worker:', error);
             });
@@ -58,7 +55,6 @@ function createTimer(savedState) {
 
     let startButton = document.createElement('button');
     startButton.textContent = (savedState && savedState.pausedTime > 0) ? 'Retomar' : 'Iniciar';
-    console.log(startButton.textContent)
     startButton.classList.add('start-button');
     startButton.dataset.timerId = timerId;
     startButton.style.display = 'inline-block';
