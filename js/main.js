@@ -52,7 +52,7 @@ function createTimer(savedState) {
 
     let decimalDisplay = document.createElement('div');
     decimalDisplay.classList.add('timer-inDecimal');
-    decimalDisplay.textContent = '0.0';
+    decimalDisplay.textContent = '0.00';
 
     let controls = document.createElement('div');
     controls.classList.add('controls');
@@ -212,7 +212,7 @@ function createTimer(savedState) {
         let decimalTime = converterTempoParaDecimal(hours, minutes, seconds);
 
         if (decimalTime <= 0) {
-            state.decimalDisplay.textContent = '0.0'
+            state.decimalDisplay.textContent = '0.00'
         }
         else {
             state.decimalDisplay.textContent = decimalTime.toString();
@@ -229,24 +229,23 @@ function createTimer(savedState) {
     if (savedState && savedState.startTimeOrigin) {
         timerStates[timerId].startTime = Date.now() - (Date.now() - savedState.startTimeOrigin);
         timerStates[timerId].pausedTime = savedState.pausedTime || 0;
-        display.textContent = '00:00:00'; // Inicializa visualmente
         startButton.style.display = 'none';
         pauseButton.style.display = 'inline-block';
         timerStates[timerId].intervalId = setInterval(() => updateTimerDisplay(timerId), 100);
         activeIntervals[timerId] = timerStates[timerId].intervalId;
         currentlyActiveTimerId = timerId;
-        container.classList.add('active'); // Adiciona a classe 'active'
-        updateTimerDisplay(timerId);
+        container.classList.add('active');
     } else if (savedState) {
         timerStates[timerId].pausedTime = savedState.pausedTime || 0;
-        display.textContent = formatTime(savedState.pausedTime || 0);
     }
+    
+    updateTimerDisplay(timerId);
 }
 
 function converterTempoParaDecimal(horas, minutos, segundos) {
     const totalMinutos = horas * 60 + minutos + ((segundos / 60) >= 0.5 ? 1 : 0);
     const decimal = totalMinutos / 60;
-    return parseFloat(decimal.toFixed(1));
+    return parseFloat(decimal.toFixed(2));
 }
 
 function pauseAllOtherTimers(currentTimerId) {
