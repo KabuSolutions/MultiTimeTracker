@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MultiTimeTracker</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./css/style.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="./images/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="./images/icon-512x512.png">
-    <link rel="icon" href="./favicon.ico" sizes="16x16 32x32" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="./img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./img/icon-512x512.png">
+    <link rel="icon" href="./img/favicon.ico" sizes="16x16 32x32" type="image/x-icon">
 </head>
 
 <body>
@@ -20,46 +20,65 @@
     <h1>Meus timers</h1>
     <div id="buttonsContainer">
         <button id="addTimerButton" title="Cria um novo cronômetro">Novo Timer</button>
-        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers salvos</button>
-        <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
-        <div id="totalTimeContainer" class="timer-container">
+        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers
+            salvos</button>
+        <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar
+            Não Utilizados</button>
+        <div id="totalTimeContainer">
             <div class="timer-display" id="totalTimeDisplay">00:00:00</div>
         </div>
     </div>
-    
-    <div id="timersContainer">
-    </div>
+
+    <div id="timersContainer"></div>
 
     <div id="versionInfoPopup" class="popup">
         <div class="popup-content">
             <span class="close-button">&times;</span>
-            <h2>Informações da Versão (1.2a)</h2>
+            <h2>Informações da Versão (0.1.4)</h2>
             <h3>Novidades:</h3>
+            <ul>
+                <li>Adicionado timer em decimal para todos os timers.</li>
+                <li>Removido o campo de input exposto. Agora é possivel editar o nome do timer clicando diretamente no
+                    título.</li>
+                <li>Adicionado overflow para o popup de novidades.</li>
+                <li>Alteração de estrutura de pastas interna.</li>
+            </ul>
+            <h3>0.1.3</h3>
             <ul>
                 <li>Correção do fantasma ao arrastar um timer.</li>
                 <li>Alteração de paleta de cores do botão de limpar timers não utilizados.</li>
                 <li>Adicionado novo efeito de luz ao timer ativo.</li>
             </ul>
-            <h3>1.2</h3>
+            <h3>0.1.2</h3>
             <ul>
                 <li>Adicionado iluminação nos timers.</li>
                 <li>Adicionado suporte à movimentação dos timers para reordenação.</li>
                 <li>Alteração de layout dos botões de sólido para outlined.</li>
             </ul>
-            <h3>1.1b</h3>
+            <h3>0.1.1</h3>
             <ul>
                 <li>Correção de timers sendo zerados ao retormar um timer antes de pausar o anterior</li>
                 <li>Adicionado timer que é a soma de todos os timers</li>
             </ul>
-            <h3>1.1a:</h3>
+            <h3>0.0.2:</h3>
             <ul>
-                <li>Os timers são automaticamente salvos a cada interação com qualquer botão na tela (exceto o de novidades).</li>
-                <li>Ao limpar os timers não utilizados agora irá manter ao menos um timer na tela, mesmo que seja um novo.</li>
+                <li>Os timers são automaticamente salvos a cada interação com qualquer botão na tela (exceto o de
+                    novidades).</li>
+                <li>Ao limpar os timers não utilizados agora irá manter ao menos um timer na tela, mesmo que seja um
+                    novo.</li>
+            </ul>
+            <h3>0.0.1:</h3>
+            <ul>
+                <li>Versão inicial do projeto.</li>
+                <li>Possibilidade de criar múltiplos timers.</li>
+                <li>Adicionado botões de criar, remover, resetar, botão de novidades e possibilidade de alterar o título
+                    do timer.</li>
             </ul>
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-    <script src="scripts.js"></script>
+    <script src="./js/main.js"></script>
 </body>
 
 </html>

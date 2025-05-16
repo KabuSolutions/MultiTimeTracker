@@ -1,13 +1,13 @@
-const VERSION = '1.2.1'; // Aumente a versão quando atualizar os arquivos
+const VERSION = '1.2.2';
 const CACHE_NAME = 'MultiTimeTracker-cache-v1';
 const urlsToCache = [
     './',
     './index.html',
-    './style.css',
-    './scripts.js',
+    './css/style.css',
+    './js/main.js',
     './manifest.json',
-    './images/icon-192x192.png',
-    './images/icon-512x512.png'
+    './img/icon-192x192.png',
+    './img/icon-512x512.png'
 ];
 
 self.addEventListener('install', function (event) {
