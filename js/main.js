@@ -9,6 +9,7 @@ if ('serviceWorker' in navigator) {
 
 const timersContainer = document.getElementById('timersContainer');
 const addTimerButton = document.getElementById('addTimerButton');
+const toggleDragButton = document.getElementById('toggleDragButton');
 const clearStorageButton = document.getElementById('clearStorageButton');
 const clearUnusedTimersButton = document.getElementById('clearUnusedTimersButton');
 const versionInfoButton = document.getElementById('versionInfoButton');
@@ -29,12 +30,18 @@ let currentlyActiveTimerId = null;
 let timerStates = {};
 const STORAGE_KEY = 'MultiTimeTrackerTimersState';
 
+let isDraggingEnabled = false;
+
 function createTimer(savedState) {
     timerIdCounter++;
     let timerId = savedState ? savedState.id : `timer-${timerIdCounter}`;
     let container = document.createElement('div');
     container.classList.add('timer-container');
     container.id = timerId;
+
+    if(isDraggingEnabled){
+        container.classList.add('draggable');
+    }
 
     let nameInput = document.createElement('input');
     nameInput.type = 'text';
@@ -379,6 +386,52 @@ closeButton.addEventListener('click', () => {
     versionInfoPopup.style.display = 'none';
 });
 
+function updateTimerOrder() {
+    let newTimerStates = {};
+    let timerElements = Array.from(timersContainer.children);
+
+    timerElements.forEach(timerElement => {
+        let timerId = timerElement.id;
+        newTimerStates[timerId] = timerStates[timerId];
+    });
+
+    timerStates = newTimerStates;
+}
+
+function initializeSortable() {
+    sortableInstance = new Sortable(timersContainer, {
+        animation: 300,
+        ghostClass: 'ghost',
+        handle: '.draggable',
+        onEnd: function () {
+            updateTimerOrder();
+            saveAllTimers();
+        }
+    });
+}
+
+function habilitaSortable(){
+    Array.from(timersContainer.children).forEach(timer => {
+        timer.classList.add('draggable');
+    });
+
+    isDraggingEnabled = true;
+}
+
+function desabilitaSortable(){
+    Array.from(timersContainer.children).forEach(timer => {
+        timer.classList.remove('draggable');
+    });
+
+    isDraggingEnabled = false;
+}
+
+window.addEventListener('click', (event) => {
+    if (event.target === versionInfoPopup) {
+        versionInfoPopup.style.display = 'none';
+    }
+});
+
 window.addEventListener('load', function () {
     let savedTimers = localStorage.getItem(STORAGE_KEY);
     timerIdCounter = 0;
@@ -405,31 +458,16 @@ window.addEventListener('load', function () {
     saveAllTimers();
     updateTotalTimeDisplay(); // Inicializa o tempo total na carga
 
-    // Inicializa o SortableJS após carregar os timers
-    let sortable = new Sortable(timersContainer, {
-        animation: 300, // Tempo de animação em milissegundos,
-        ghostClass: 'ghost',
-        onEnd: function (evt) {
-            updateTimerOrder();
-            saveAllTimers();
+    initializeSortable(); // Inicializa o SortableJS na carga
+    habilitaSortable();
+
+    toggleDragButton.addEventListener('click', function () {
+        if (isDraggingEnabled) {
+            desabilitaSortable();
+            toggleDragButton.textContent = "Ativar Movimentação";
+        } else {
+            habilitaSortable();
+            toggleDragButton.textContent = "Desativar Movimentação";
         }
     });
-});
-
-function updateTimerOrder() {
-    let newTimerStates = {};
-    let timerElements = Array.from(timersContainer.children);
-
-    timerElements.forEach(timerElement => {
-        let timerId = timerElement.id;
-        newTimerStates[timerId] = timerStates[timerId];
-    });
-
-    timerStates = newTimerStates;
-}
-
-window.addEventListener('click', (event) => {
-    if (event.target === versionInfoPopup) {
-        versionInfoPopup.style.display = 'none';
-    }
 });

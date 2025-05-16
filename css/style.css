@@ -25,6 +25,16 @@ body {
     flex-wrap: wrap;
 }
 
+.draggable{
+    border-color: lightblue !important;
+}
+
+#toggleDragButton{
+    border: 1px solid;
+    border-color: green;
+    color: green;
+}
+
 .timer-container {
     border: 1px solid #ccc;
     padding: 20px;

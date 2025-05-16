@@ -20,10 +20,9 @@
     <h1>Meus timers</h1>
     <div id="buttonsContainer">
         <button id="addTimerButton" title="Cria um novo cronômetro">Novo Timer</button>
-        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers
-            salvos</button>
-        <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar
-            Não Utilizados</button>
+        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers salvos</button>
+        <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
+        <button id="toggleDragButton" title="Ativar/Desativar a movimentação dos timers">Desativar Movimentação</button>
         <div id="totalTimeContainer">
             <div class="timer-display" id="totalTimeDisplay">00:00:00</div>
         </div>
@@ -34,8 +33,15 @@
     <div id="versionInfoPopup" class="popup">
         <div class="popup-content">
             <span class="close-button">&times;</span>
-            <h2>Informações da Versão (0.1.4)</h2>
+            <h2>Informações da Versão (0.1.5)</h2>
             <h3>Novidades:</h3>
+            <ul>
+                <li>Adicionado novo botão para desabilitar/habilitar o modo de movimento dos timers.</li>
+                <li>Alteração do display em decimal para duas casas decimais.</li>
+                <li>Ajustes de bugs visuais quando o timer não iniciava corretamente.</li>
+                <li>Ajustes de bugs visuais quando o timer era resetado.</li>
+            </ul>
+            <h3>0.1.4</h3>
             <ul>
                 <li>Adicionado timer em decimal para todos os timers.</li>
                 <li>Removido o campo de input exposto. Agora é possivel editar o nome do timer clicando diretamente no
