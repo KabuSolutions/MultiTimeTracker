@@ -166,6 +166,7 @@ function createTimer(savedState) {
         state.startTime = null;
         state.pausedTime = 0;
         updateDisplay(0, timerId);
+        updateDecimalDisplay(0, timerId);
         startButton.textContent = 'Iniciar';
         startButton.style.display = 'inline-block';
         pauseButton.style.display = 'none';
