@@ -14,6 +14,7 @@
 
 <body>
     <div id="versionInfoContainer">
+        <button id="themeToggleBtn" title="Alternar Tema Claro/Escuro">🌓</button>
         <button id="donationButton" title="Apoie-nos">💖</button>
         <a href="https://github.com/KabuSolutions/MultiTimeTracker/issues" target="_blank" title="Reportar problema ou sugerir melhorias">
             <button id="bugReportButton">🐞</button>
@@ -25,6 +26,7 @@
     <div id="buttonsContainer">
         <button id="addListButton" title="Cria uma nova lista de tarefas">Nova Lista</button>
         <button id="addTimerButton" title="Cria um novo cronômetro na lista ativa">Novo Timer</button>
+        <button id="resetAllButton" title="Zera todos os cronômetros da lista ativa">Resetar Lista Ativa</button>
         <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar tudo</button>
         <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
         <button id="toggleDragButton" title="Ativar/Desativar a movimentação dos timers">Desativar Movimentação</button>
@@ -39,23 +41,18 @@
     <div id="donationPopup" class="popup">
         <div class="popup-content">
             <span class="close-button" data-target="donationPopup">&times;</span>
-            
             <div class="heart-container">
                 <span class="heart-anim">💖</span>
             </div>
-
             <h2 style="text-align: center;">Apoie o MultiTimeTracker</h2>
-            
             <p class="donation-message">
                 Olá! Se esta ferramenta tem ajudado na sua produtividade e organização, considere fazer uma contribuição.<br><br>
                 O MultiTimeTracker é um projeto Open Source mantido com carinho. Sua doação ajuda a manter o desenvolvimento ativo e trazer novas funcionalidades!
             </p>
-
             <div class="qr-code-container">
                 <img src="./img/qrcode.png" alt="QR Code para Doação" class="qr-code-img">
             </div>
-            
-            <p style="text-align: center; font-size: 0.9em; color: #888;">
+            <p style="text-align: center; font-size: 0.9em; color: var(--text-muted);">
                 Qualquer valor é bem-vindo e faz a diferença! Obrigado!
             </p>
         </div>
@@ -64,8 +61,15 @@
     <div id="versionInfoPopup" class="popup">
         <div class="popup-content" style="display: block;">
             <span class="close-button" data-target="versionInfoPopup">&times;</span>
-            <h2>Informações da Versão (0.2.0)</h2>
+            <h2>Informações da Versão (0.3.0)</h2>
             <h3>Novidades:</h3>
+            <ul>
+                <li><strong>Modo Escuro:</strong> Adicionado suporte nativo a tema escuro.</li>
+                <li><strong>Resetar Lista:</strong> Novo botão para zerar todos os timers da lista ativa de uma vez.</li>
+                <li><strong>Limite de Texto:</strong> Nomes de cronômetros agora são limitados a 30 caracteres para evitar quebra de layout.</li>
+            </ul>
+
+            <h3>0.2.0</h3>
             <ul>
                 <li>Adicionado importação automática do modelo da versão 0.1.5 para a nova versão.</li>
                 <li>Adicionado suporte para múltiplos grupos de cronômetros.</li>
@@ -123,7 +127,6 @@
                 <li>Possibilidade de criar múltiplos timers.</li>
                 <li>Adicionado botões de criar, remover, resetar, botão de novidades e possibilidade de alterar o título
                     do timer.</li>
-            </ul>
         </div>
     </div>
 

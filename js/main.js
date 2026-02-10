@@ -14,12 +14,14 @@ const addTimerButton = document.getElementById('addTimerButton');
 const toggleDragButton = document.getElementById('toggleDragButton');
 const clearStorageButton = document.getElementById('clearStorageButton');
 const clearUnusedTimersButton = document.getElementById('clearUnusedTimersButton');
+const resetAllButton = document.getElementById('resetAllButton'); // Novo botão
 
-// Elementos de Popups
+// Elementos de Popups e Tema
 const versionInfoButton = document.getElementById('versionInfoButton');
 const versionInfoPopup = document.getElementById('versionInfoPopup');
 const donationButton = document.getElementById('donationButton');
 const donationPopup = document.getElementById('donationPopup');
+const themeToggleBtn = document.getElementById('themeToggleBtn'); // Novo botão
 const closeButtons = document.querySelectorAll('.close-button');
 
 // Estado Global
@@ -31,11 +33,32 @@ let timerStates = {};
 let activeListId = null;
 const STORAGE_KEY = 'MultiTimeTrackerData_v2'; 
 const OLD_STORAGE_KEY = 'MultiTimeTrackerTimersState'; 
+const THEME_KEY = 'MultiTimeTrackerTheme'; // Chave para salvar o tema
 
 // Variável para armazenar a instância do Sortable das listas
 let listSortable = null;
 
 let isDraggingEnabled = true;
+
+// --- Gerenciamento de Tema (Dark Mode) ---
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+    themeToggleBtn.textContent = isDark ? '🌞' : '🌓';
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeToggleBtn.textContent = '🌞';
+    } else {
+        document.body.classList.remove('dark-mode');
+        themeToggleBtn.textContent = '🌓';
+    }
+}
 
 // --- Gerenciamento de Listas ---
 
@@ -208,6 +231,10 @@ function createTimer(savedState = null, targetListId = null) {
     nameInput.type = 'text';
     nameInput.classList.add('timer-name-input');
     nameInput.value = savedState ? savedState.name : `Cronômetro ${timerIdCounter}`;
+    
+    // --- NOVIDADE: Limite de caracteres ---
+    nameInput.maxLength = 30;
+
     const initialName = nameInput.value;
 
     let title = document.createElement('h2');
@@ -679,6 +706,7 @@ clearStorageButton.addEventListener('click', function () {
     if(confirm("Deseja apagar TUDO (incluindo backups antigos)?")) {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(OLD_STORAGE_KEY); 
+        localStorage.removeItem(THEME_KEY);
         location.reload();
     }
 });
@@ -706,6 +734,63 @@ clearUnusedTimersButton.addEventListener('click', function () {
     saveAllData();
 });
 
+// --- NOVIDADE: Resetar Lista Ativa ---
+resetAllButton.addEventListener('click', function () {
+    if (!activeListId) {
+        alert("Nenhuma lista ativa selecionada.");
+        return;
+    }
+
+    const listEl = document.getElementById(activeListId);
+    const titleInput = listEl.querySelector('.list-name-input');
+    const listName = titleInput ? titleInput.value : 'esta lista';
+
+    if (!confirm(`Deseja ZERAR todos os cronômetros de "${listName}"?`)) {
+        return;
+    }
+
+    const innerContainer = listEl.querySelector('.timers-container-inner');
+    const timerElements = innerContainer.children;
+
+    Array.from(timerElements).forEach(timerEl => {
+        const timerId = timerEl.id;
+        const state = timerStates[timerId];
+        
+        // Simula o clique no botão de reset de cada timer para reaproveitar a lógica
+        // Ou executa a lógica diretamente para mais segurança
+        if (state) {
+            // Para timers ativos, limpar intervalo
+            if(state.intervalId) clearInterval(state.intervalId);
+            delete activeIntervals[timerId];
+            
+            // Zerar estado
+            state.startTime = null;
+            state.pausedTime = 0;
+            
+            // Atualizar UI
+            updateDisplay(0, timerId);
+            updateDecimalDisplay(0, timerId);
+            
+            // Restaurar botões
+            const startBtn = timerEl.querySelector('.start-button');
+            const pauseBtn = timerEl.querySelector('.pause-button');
+            
+            if(startBtn) {
+                startBtn.textContent = 'Iniciar';
+                startBtn.style.display = 'inline-block';
+            }
+            if(pauseBtn) pauseBtn.style.display = 'none';
+            
+            timerEl.classList.remove('active');
+            
+            // Se este era o timer ativo globalmente, limpar referência
+            if (currentlyActiveTimerId === timerId) currentlyActiveTimerId = null;
+        }
+    });
+
+    updateAllListsTotals();
+    saveAllData();
+});
 
 toggleDragButton.addEventListener('click', function () {
     if (isDraggingEnabled) {
@@ -724,10 +809,12 @@ donationButton.addEventListener('click', () => {
     donationPopup.style.display = 'flex';
 });
 
+// Event Listener do Tema
+themeToggleBtn.addEventListener('click', toggleTheme);
+
 // Fecha modais ao clicar no X
 closeButtons.forEach(btn => {
     btn.addEventListener('click', function() {
-        // Usa o atributo data-target para saber qual popup fechar
         const targetId = this.getAttribute('data-target');
         if (targetId) {
             document.getElementById(targetId).style.display = 'none';
@@ -747,6 +834,7 @@ window.addEventListener('click', (event) => {
 
 window.addEventListener('load', function () {
     loadAllData();
+    loadTheme(); // Carrega o tema salvo
     initializeListSorting(); 
     
     if(isDraggingEnabled) {
