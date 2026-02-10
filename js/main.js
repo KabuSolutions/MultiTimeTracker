@@ -7,34 +7,195 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-const timersContainer = document.getElementById('timersContainer');
+// Elementos Principais
+const listsWrapper = document.getElementById('listsWrapper');
+const addListButton = document.getElementById('addListButton');
 const addTimerButton = document.getElementById('addTimerButton');
 const toggleDragButton = document.getElementById('toggleDragButton');
 const clearStorageButton = document.getElementById('clearStorageButton');
 const clearUnusedTimersButton = document.getElementById('clearUnusedTimersButton');
+
+// Elementos de Popups
 const versionInfoButton = document.getElementById('versionInfoButton');
 const versionInfoPopup = document.getElementById('versionInfoPopup');
-const closeButton = document.querySelector('.close-button');
+const donationButton = document.getElementById('donationButton');
+const donationPopup = document.getElementById('donationPopup');
+const closeButtons = document.querySelectorAll('.close-button');
 
-const newTimerPopup = document.getElementById('newTimerPopup');
-const closeNewTimerPopup = document.getElementById('closeNewTimerPopup');
-const createNewTimerButton = document.getElementById('createNewTimerButton');
-const cancelNewTimerButton = document.getElementById('cancelNewTimerButton');
-const newTimerNameInput = document.getElementById('newTimerNameInput');
-
-const totalTimeDisplay = document.getElementById('totalTimeDisplay');
-
+// Estado Global
 let timerIdCounter = 0;
+let listIdCounter = 0;
 let activeIntervals = {};
 let currentlyActiveTimerId = null;
 let timerStates = {};
-const STORAGE_KEY = 'MultiTimeTrackerTimersState';
+let activeListId = null;
+const STORAGE_KEY = 'MultiTimeTrackerData_v2'; 
+const OLD_STORAGE_KEY = 'MultiTimeTrackerTimersState'; 
 
-let isDraggingEnabled = false;
+// Variável para armazenar a instância do Sortable das listas
+let listSortable = null;
 
-function createTimer(savedState) {
+let isDraggingEnabled = true;
+
+// --- Gerenciamento de Listas ---
+
+function createList(savedListState = null, prepend = true) {
+    let listId;
+
+    if (savedListState && savedListState.id) {
+        listId = savedListState.id;
+        const idNum = parseInt(listId.split('-')[1]);
+        if (idNum > listIdCounter) listIdCounter = idNum;
+    } else {
+        listIdCounter++;
+        listId = `list-${listIdCounter}`;
+    }
+
+    const listSection = document.createElement('div');
+    listSection.classList.add('list-section');
+    listSection.id = listId;
+
+    // --- Header ---
+    const header = document.createElement('div');
+    header.classList.add('list-header');
+    
+    // 1. Ícone de Toggle
+    const toggleIcon = document.createElement('span');
+    toggleIcon.textContent = '▼'; 
+    toggleIcon.classList.add('list-toggle-icon');
+
+    // 2. Input do Nome
+    const listNameInput = document.createElement('input');
+    listNameInput.type = 'text';
+    listNameInput.classList.add('list-name-input');
+    listNameInput.value = (savedListState && savedListState.title) ? savedListState.title : `Lista ${listIdCounter}`;
+    listNameInput.placeholder = "Nome da Lista";
+    
+    listNameInput.addEventListener('input', () => saveAllData());
+    listNameInput.addEventListener('click', (e) => e.stopPropagation()); 
+
+    // 3. Espaçador
+    const spacer = document.createElement('div');
+    spacer.classList.add('header-spacer');
+
+    // 4. Display do Total
+    const totalDisplay = document.createElement('div');
+    totalDisplay.classList.add('list-total-display');
+    totalDisplay.textContent = '00:00:00';
+    totalDisplay.id = `total-${listId}`;
+
+    // 5. Botão Remover
+    const removeListBtn = document.createElement('button');
+    removeListBtn.textContent = 'X';
+    removeListBtn.title = 'Remover Lista';
+    removeListBtn.classList.add('remove-list-button');
+    removeListBtn.onclick = (e) => {
+        e.stopPropagation(); 
+        removeList(listId);
+    };
+
+    header.appendChild(toggleIcon);
+    header.appendChild(listNameInput);
+    header.appendChild(spacer);
+    header.appendChild(totalDisplay);
+    header.appendChild(removeListBtn);
+
+    // --- Container dos Timers ---
+    const innerContainer = document.createElement('div');
+    innerContainer.classList.add('timers-container-inner');
+    innerContainer.id = `container-${listId}`;
+
+    listSection.appendChild(header);
+    listSection.appendChild(innerContainer);
+
+    if (savedListState && savedListState.collapsed) {
+        listSection.classList.add('collapsed');
+    }
+
+    if (prepend) {
+        listsWrapper.insertBefore(listSection, listsWrapper.firstChild);
+    } else {
+        listsWrapper.appendChild(listSection);
+    }
+
+    initializeSortableForList(innerContainer);
+
+    listSection.addEventListener('click', () => {
+        setActiveList(listId);
+    });
+
+    header.addEventListener('click', () => {
+        listSection.classList.toggle('collapsed');
+        saveAllData();
+    });
+
+    if (!savedListState || !savedListState.id) {
+        setActiveList(listId);
+    }
+
+    return { listId, innerContainer };
+}
+
+function setActiveList(listId) {
+    activeListId = listId;
+    
+    document.querySelectorAll('.list-section').forEach(el => {
+        el.classList.remove('active-list');
+    });
+    
+    const activeEl = document.getElementById(listId);
+    if (activeEl) {
+        activeEl.classList.add('active-list');
+    }
+}
+
+function removeList(listId) {
+    const listEl = document.getElementById(listId);
+    const titleInput = listEl.querySelector('.list-name-input');
+    const listName = titleInput ? titleInput.value : 'esta lista';
+
+    if (!confirm(`Tem certeza que deseja remover a lista "${listName}" e todos os seus cronômetros?`)) return;
+
+    const innerContainer = listEl.querySelector('.timers-container-inner');
+    
+    Array.from(innerContainer.children).forEach(timerEl => {
+        removeTimer(timerEl.id, false); 
+    });
+
+    listEl.remove();
+
+    if (activeListId === listId) {
+        const firstList = listsWrapper.querySelector('.list-section');
+        if (firstList) {
+            setActiveList(firstList.id);
+        } else {
+            activeListId = null;
+        }
+    }
+    
+    saveAllData();
+}
+
+// --- Gerenciamento de Timers ---
+
+function createTimer(savedState = null, targetListId = null) {
+    if (!targetListId && !activeListId) {
+        createList();
+    }
+    
+    const destListId = targetListId || activeListId;
+    const targetContainer = document.getElementById(`container-${destListId}`);
+
+    if (!targetContainer) return;
+
     timerIdCounter++;
     let timerId = savedState ? savedState.id : `timer-${timerIdCounter}`;
+    
+    if (savedState) {
+        const idNum = parseInt(timerId.split('-')[1]);
+        if (idNum > timerIdCounter) timerIdCounter = idNum;
+    }
+
     let container = document.createElement('div');
     container.classList.add('timer-container');
     container.id = timerId;
@@ -47,7 +208,7 @@ function createTimer(savedState) {
     nameInput.type = 'text';
     nameInput.classList.add('timer-name-input');
     nameInput.value = savedState ? savedState.name : `Cronômetro ${timerIdCounter}`;
-    const initialName = nameInput.value; // Salva o nome inicial
+    const initialName = nameInput.value;
 
     let title = document.createElement('h2');
     title.classList.add('timer-title');
@@ -68,8 +229,7 @@ function createTimer(savedState) {
     startButton.textContent = (savedState && savedState.pausedTime > 0) ? 'Retomar' : 'Iniciar';
     startButton.classList.add('start-button');
     startButton.dataset.timerId = timerId;
-    startButton.style.display = 'inline-block';
-
+    
     let pauseButton = document.createElement('button');
     pauseButton.textContent = 'Pausar';
     pauseButton.classList.add('pause-button');
@@ -85,7 +245,6 @@ function createTimer(savedState) {
     removeButton.textContent = 'Remover';
     removeButton.classList.add('remove-button');
     removeButton.dataset.timerId = timerId;
-    removeButton.disabled = timersContainer.children.length <= 1;
 
     controls.appendChild(startButton);
     controls.appendChild(pauseButton);
@@ -98,16 +257,27 @@ function createTimer(savedState) {
     container.appendChild(decimalDisplay);
     container.appendChild(controls);
 
-    timersContainer.appendChild(container);
+    if (savedState) {
+        targetContainer.appendChild(container);
+    } else {
+        targetContainer.prepend(container);
+    }
 
-    let startTime = null;
-    let pausedTime = savedState ? savedState.pausedTime || 0 : 0;
-    let intervalId = null;
-    timerStates[timerId] = { container, startTime, pausedTime, intervalId, nameInput, title, display, decimalDisplay, initialName }; // Salva initialName
+    timerStates[timerId] = { 
+        container, 
+        startTime: null, 
+        pausedTime: savedState ? savedState.pausedTime || 0 : 0, 
+        intervalId: null, 
+        nameInput, 
+        title, 
+        display, 
+        decimalDisplay, 
+        initialName 
+    };
 
     nameInput.addEventListener('input', function () {
         title.textContent = this.value;
-        saveAllTimers(); // Garante que o nome atual seja salvo
+        saveAllData();
     });
 
     title.addEventListener('click', function () {
@@ -131,153 +301,120 @@ function createTimer(savedState) {
     });
 
     startButton.addEventListener('click', function () {
-        let timerId = this.dataset.timerId;
-        pauseAllOtherTimers(timerId);
-        let state = timerStates[timerId];
+        let tId = this.dataset.timerId;
+        pauseAllOtherTimers(tId);
+        let state = timerStates[tId];
         if (!state.startTime) {
             state.startTime = Date.now();
             this.style.display = 'none';
             pauseButton.style.display = 'inline-block';
-            state.intervalId = setInterval(() => updateTimerDisplay(timerId), 100);
-            activeIntervals[timerId] = state.intervalId;
-            currentlyActiveTimerId = timerId;
+            state.intervalId = setInterval(() => updateTimerDisplay(tId), 100);
+            activeIntervals[tId] = state.intervalId;
+            currentlyActiveTimerId = tId;
             this.textContent = 'Retomar';
-            container.classList.add('active'); // Adiciona a classe 'active'
+            container.classList.add('active');
         }
-        saveAllTimers();
-        updateTotalTimeDisplay(); // Atualiza o tempo total
+        saveAllData();
+        updateAllListsTotals();
     });
 
     pauseButton.addEventListener('click', function () {
-        let timerId = this.dataset.timerId;
-        let state = timerStates[timerId];
+        let tId = this.dataset.timerId;
+        let state = timerStates[tId];
         if (state.startTime) {
             state.pausedTime += (Date.now() - state.startTime);
             clearInterval(state.intervalId);
-            delete activeIntervals[timerId];
+            delete activeIntervals[tId];
             state.startTime = null;
             startButton.style.display = 'inline-block';
             this.style.display = 'none';
             currentlyActiveTimerId = null;
-            container.classList.remove('active'); // Remove a classe 'active'
+            container.classList.remove('active');
         }
-        saveAllTimers();
-        updateTotalTimeDisplay(); // Atualiza o tempo total
+        saveAllData();
+        updateAllListsTotals();
     });
 
     resetButton.addEventListener('click', function () {
-        let timerId = this.dataset.timerId;
-        let state = timerStates[timerId];
+        let tId = this.dataset.timerId;
+        let state = timerStates[tId];
         clearInterval(state.intervalId);
-        delete activeIntervals[timerId];
+        delete activeIntervals[tId];
         state.startTime = null;
         state.pausedTime = 0;
-        updateDisplay(0, timerId);
-        updateDecimalDisplay(0, timerId);
+        updateDisplay(0, tId);
+        updateDecimalDisplay(0, tId);
         startButton.textContent = 'Iniciar';
         startButton.style.display = 'inline-block';
         pauseButton.style.display = 'none';
-        container.classList.remove('active'); // Remove a classe 'active'
-        if (currentlyActiveTimerId === timerId) {
-            currentlyActiveTimerId = null;
-        }
-        saveAllTimers();
-        updateTotalTimeDisplay(); // Atualiza o tempo total
+        container.classList.remove('active');
+        if (currentlyActiveTimerId === tId) currentlyActiveTimerId = null;
+        saveAllData();
+        updateAllListsTotals();
     });
 
     removeButton.addEventListener('click', function () {
-        let timerId = this.dataset.timerId;
-        let timerName = timerStates[timerId].nameInput.value || `Cronômetro ${timerId.split('-')[1]}`;
-        if (confirm(`Tem certeza que deseja remover o cronômetro "${timerName}"?`)) {
-            clearInterval(timerStates[timerId].intervalId);
-            delete activeIntervals[timerId];
-            delete timerStates[timerId];
-            container.remove();
-            updateRemoveButtonsState();
-            if (currentlyActiveTimerId === timerId) {
-                currentlyActiveTimerId = null;
-            }
-        }
-        saveAllTimers();
-        updateTotalTimeDisplay(); // Atualiza o tempo total
+        removeTimer(this.dataset.timerId, true);
     });
-
-    function updateTimerDisplay(timerId) {
-        let state = timerStates[timerId];
-        if (state) {
-            let currentTime = state.startTime ? Date.now() - state.startTime + state.pausedTime : state.pausedTime;
-            updateDisplay(currentTime, timerId);
-            updateDecimalDisplay(currentTime, timerId);
-            updateTotalTimeDisplay();
-        }
-    }
-
-    function updateDecimalDisplay(totalMilliseconds, timerId) {
-        let state = timerStates[timerId];
-        let hours = Math.floor(totalMilliseconds / 3600000);
-        let minutes = Math.floor((totalMilliseconds % 3600000) / 60000);
-        let seconds = (totalMilliseconds % 60000) / 1000;
-        let decimalTime = converterTempoParaDecimal(hours, minutes, seconds);
-
-        if (decimalTime <= 0) {
-            state.decimalDisplay.textContent = '0.00'
-        }
-        else {
-            state.decimalDisplay.textContent = decimalTime.toString();
-        }
-    }
-
-    function updateDisplay(totalMilliseconds, timerId) {
-        let displayElement = timerStates[timerId].display;
-        displayElement.textContent = formatTime(totalMilliseconds);
-    }
-
-    updateRemoveButtonsState();
 
     if (savedState && savedState.startTimeOrigin) {
         timerStates[timerId].startTime = Date.now() - (Date.now() - savedState.startTimeOrigin);
-        timerStates[timerId].pausedTime = savedState.pausedTime || 0;
-        startButton.style.display = 'none';
-        pauseButton.style.display = 'inline-block';
         timerStates[timerId].intervalId = setInterval(() => updateTimerDisplay(timerId), 100);
         activeIntervals[timerId] = timerStates[timerId].intervalId;
         currentlyActiveTimerId = timerId;
         container.classList.add('active');
-    } else if (savedState) {
-        timerStates[timerId].pausedTime = savedState.pausedTime || 0;
     }
     
-    updateTimerDisplay(timerId);
+    updateTimerDisplay(timerId); 
+    updateAllListsTotals(); 
+}
+
+function removeTimer(timerId, confirmAction) {
+    let timerName = timerStates[timerId].nameInput.value;
+    if (!confirmAction || confirm(`Tem certeza que deseja remover o cronômetro "${timerName}"?`)) {
+        if(timerStates[timerId].intervalId) clearInterval(timerStates[timerId].intervalId);
+        delete activeIntervals[timerId];
+        timerStates[timerId].container.remove();
+        delete timerStates[timerId];
+        
+        if (currentlyActiveTimerId === timerId) currentlyActiveTimerId = null;
+        
+        saveAllData();
+        updateAllListsTotals();
+    }
+}
+
+// --- Funções Auxiliares de Tempo ---
+
+function updateTimerDisplay(timerId) {
+    let state = timerStates[timerId];
+    if (state) {
+        let currentTime = state.startTime ? Date.now() - state.startTime + state.pausedTime : state.pausedTime;
+        updateDisplay(currentTime, timerId);
+        updateDecimalDisplay(currentTime, timerId);
+        updateAllListsTotals(); 
+    }
+}
+
+function updateDecimalDisplay(totalMilliseconds, timerId) {
+    let state = timerStates[timerId];
+    let hours = Math.floor(totalMilliseconds / 3600000);
+    let minutes = Math.floor((totalMilliseconds % 3600000) / 60000);
+    let seconds = (totalMilliseconds % 60000) / 1000;
+    let decimalTime = converterTempoParaDecimal(hours, minutes, seconds);
+
+    state.decimalDisplay.textContent = decimalTime <= 0 ? '0.00' : decimalTime.toString();
+}
+
+function updateDisplay(totalMilliseconds, timerId) {
+    let displayElement = timerStates[timerId].display;
+    displayElement.textContent = formatTime(totalMilliseconds);
 }
 
 function converterTempoParaDecimal(horas, minutos, segundos) {
     const totalMinutos = horas * 60 + minutos + ((segundos / 60) >= 0.5 ? 1 : 0);
     const decimal = totalMinutos / 60;
     return parseFloat(decimal.toFixed(2));
-}
-
-function pauseAllOtherTimers(currentTimerId) {
-    for (let timerId in timerStates) {
-        if (timerId !== currentTimerId) {
-            let state = timerStates[timerId];
-            if (state.startTime) {
-                state.pausedTime += (Date.now() - state.startTime);
-                clearInterval(state.intervalId);
-                delete activeIntervals[timerId];
-                state.startTime = null;
-                currentlyActiveTimerId = null;
-                let startButton = state.container.querySelector('.start-button');
-                let pauseButton = state.container.querySelector('.pause-button');
-                startButton.style.display = 'inline-block';
-                pauseButton.style.display = 'none';
-                state.container.classList.remove('active'); // Remove a classe 'active' dos outros
-            }
-        } else {
-            timerStates[timerId].container.classList.add('active'); // Adiciona a classe 'active' ao timer atual
-        }
-    }
-    currentlyActiveTimerId = currentTimerId;
-    saveAllTimers();
 }
 
 function formatTime(totalMilliseconds) {
@@ -288,55 +425,267 @@ function formatTime(totalMilliseconds) {
     return `${hours}:${minutes}:${seconds}`;
 }
 
-function updateRemoveButtonsState() {
-    let removeButtons = document.querySelectorAll('.remove-button');
-    removeButtons.forEach(button => {
-        button.disabled = timersContainer.children.length <= 1;
+function pauseAllOtherTimers(currentTimerId) {
+    for (let tId in timerStates) {
+        if (tId !== currentTimerId) {
+            let state = timerStates[tId];
+            if (state.startTime) {
+                state.pausedTime += (Date.now() - state.startTime);
+                clearInterval(state.intervalId);
+                delete activeIntervals[tId];
+                state.startTime = null;
+                
+                let startBtn = state.container.querySelector('.start-button');
+                let pauseBtn = state.container.querySelector('.pause-button');
+                if(startBtn) startBtn.style.display = 'inline-block';
+                if(pauseBtn) pauseBtn.style.display = 'none';
+                state.container.classList.remove('active');
+            }
+        } else {
+            timerStates[tId].container.classList.add('active');
+        }
+    }
+    currentlyActiveTimerId = currentTimerId;
+    saveAllData();
+}
+
+// --- Atualização de Totais (Por Lista) ---
+
+function updateAllListsTotals() {
+    const listSections = document.querySelectorAll('.list-section');
+    
+    listSections.forEach(listSection => {
+        const listId = listSection.id;
+        const innerContainer = listSection.querySelector('.timers-container-inner');
+        const totalDisplay = listSection.querySelector(`#total-${listId}`);
+        
+        let listTotalMs = 0;
+        
+        Array.from(innerContainer.children).forEach(timerContainer => {
+            const timerId = timerContainer.id;
+            const state = timerStates[timerId];
+            if (state) {
+                if (state.startTime) {
+                    listTotalMs += (Date.now() - state.startTime + state.pausedTime);
+                } else {
+                    listTotalMs += state.pausedTime;
+                }
+            }
+        });
+        
+        if(totalDisplay) {
+            totalDisplay.textContent = formatTime(listTotalMs);
+        }
     });
 }
 
-function saveAllTimers() {
-    let timersData = [];
-    for (let timerId in timerStates) {
-        let state = timerStates[timerId];
-        timersData.push({
-            id: timerId,
-            name: state.nameInput.value,
-            pausedTime: state.pausedTime,
-            startTimeOrigin: state.startTime ? state.startTime : null,
-            initialName: state.initialName
+// --- Persistência de Dados ---
+
+function saveAllData() {
+    let data = {
+        lists: []
+    };
+
+    const listSections = document.querySelectorAll('.list-section');
+    listSections.forEach(listSection => {
+        const titleInput = listSection.querySelector('.list-name-input');
+        const isCollapsed = listSection.classList.contains('collapsed');
+        let listObj = {
+            id: listSection.id,
+            title: titleInput ? titleInput.value : '',
+            collapsed: isCollapsed,
+            timers: []
+        };
+
+        const innerContainer = listSection.querySelector('.timers-container-inner');
+        Array.from(innerContainer.children).forEach(timerContainer => {
+            const tId = timerContainer.id;
+            const state = timerStates[tId];
+            if (state) {
+                listObj.timers.push({
+                    id: tId,
+                    name: state.nameInput.value,
+                    pausedTime: state.pausedTime,
+                    startTimeOrigin: state.startTime || null,
+                    initialName: state.initialName
+                });
+            }
         });
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(timersData));
+
+        data.lists.push(listObj);
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-function updateTotalTimeDisplay() {
-    let totalMilliseconds = 0;
-    for (let timerId in timerStates) {
-        let state = timerStates[timerId];
-        if (state.startTime) {
-            totalMilliseconds += (Date.now() - state.startTime + state.pausedTime);
-        } else {
-            totalMilliseconds += state.pausedTime;
+function loadAllData() {
+    const savedJSON = localStorage.getItem(STORAGE_KEY);
+    listsWrapper.innerHTML = '';
+    timerStates = {};
+    activeIntervals = {};
+    timerIdCounter = 0;
+    listIdCounter = 0;
+    let loadedAnything = false;
+
+    if (savedJSON) {
+        const data = JSON.parse(savedJSON);
+        
+        if (data.lists && data.lists.length > 0) {
+            data.lists.forEach(listData => {
+                createList(listData, false); 
+                
+                listData.timers.forEach(timerData => {
+                    createTimer(timerData, listData.id);
+                });
+            });
+
+            if(data.lists.length > 0) {
+                setActiveList(data.lists[0].id);
+            }
+            loadedAnything = true;
         }
-    }
-    totalTimeDisplay.textContent = formatTime(totalMilliseconds);
+    } 
+    
+    checkAndMigrateOldData(loadedAnything);
+    
+    updateAllListsTotals();
 }
+
+function checkAndMigrateOldData(hasV2Data) {
+    const oldData = localStorage.getItem(OLD_STORAGE_KEY);
+    
+    if (!oldData) {
+        if (!hasV2Data) initDefault();
+        return;
+    }
+
+    const existingLists = document.querySelectorAll('.list-name-input');
+    let migrationListExists = false;
+    existingLists.forEach(input => {
+        if(input.value === 'Timers Antigos') migrationListExists = true;
+    });
+
+    if (migrationListExists) {
+        if (!hasV2Data) initDefault(); 
+        return;
+    }
+
+    try {
+        const oldTimers = JSON.parse(oldData);
+        if (oldTimers.length > 0) {
+            const listInfo = createList({ title: 'Timers Antigos' }, false);
+            oldTimers.forEach(t => createTimer(t, listInfo.listId));
+            
+            if (!hasV2Data) {
+                const newListInfo = createList({ title: 'Nova Lista' }, true);
+                setActiveList(newListInfo.listId);
+                createTimer(null, newListInfo.listId);
+            }
+            
+            saveAllData(); 
+            console.log("Timers antigos migrados com sucesso.");
+        } else if (!hasV2Data) {
+            initDefault();
+        }
+    } catch(e) {
+        console.error("Erro ao migrar dados antigos:", e);
+        if (!hasV2Data) initDefault();
+    }
+}
+
+function initDefault() {
+    const listInfo = createList({ title: 'Minha Lista' }, true);
+    createTimer(null, listInfo.listId);
+    setActiveList(listInfo.listId);
+}
+
+// --- Drag & Drop ---
+
+function initializeSortableForList(element) {
+    new Sortable(element, {
+        group: 'shared-timers', 
+        animation: 150,
+        ghostClass: 'ghost',
+        handle: '.draggable',
+        onEnd: function (evt) {
+            saveAllData();
+            updateAllListsTotals();
+        }
+    });
+}
+
+// Inicializa o Sortable de LISTAS
+function initializeListSorting() {
+    listSortable = new Sortable(listsWrapper, {
+        animation: 150,
+        handle: '.list-header', // Arrastar pelo cabeçalho
+        ghostClass: 'ghost', 
+        filter: 'input, button', 
+        preventOnFilter: false, 
+        onEnd: function (evt) {
+            saveAllData(); 
+        }
+    });
+}
+
+function habilitaSortable(){
+    // Habilita timers
+    document.querySelectorAll('.timer-container').forEach(timer => {
+        timer.classList.add('draggable');
+    });
+
+    // Habilita listas
+    if(listSortable) {
+        listSortable.option("disabled", false);
+    }
+    
+    isDraggingEnabled = true;
+    toggleDragButton.textContent = "Desativar Movimentação";
+}
+
+function desabilitaSortable(){
+    // Desabilita timers
+    document.querySelectorAll('.timer-container').forEach(timer => {
+        timer.classList.remove('draggable');
+    });
+
+    // Desabilita listas
+    if(listSortable) {
+        listSortable.option("disabled", true);
+    }
+    
+    isDraggingEnabled = false;
+    toggleDragButton.textContent = "Ativar Movimentação";
+}
+
+// --- Event Listeners Globais ---
+
+addListButton.addEventListener('click', function() {
+    const info = createList({ title: 'Nova Lista' }, true);
+    createTimer(null, info.listId);
+    saveAllData();
+});
 
 addTimerButton.addEventListener('click', function () {
-    createTimer();
-    saveAllTimers();
-    updateTotalTimeDisplay(); // Atualiza o tempo total
+    if (!activeListId && listsWrapper.children.length === 0) {
+        const info = createList();
+        setActiveList(info.listId);
+    }
+    createTimer(); 
+    saveAllData();
 });
 
 clearStorageButton.addEventListener('click', function () {
-    localStorage.removeItem(STORAGE_KEY);
-    alert('Dados salvos foram removidos do armazenamento local.');
+    if(confirm("Deseja apagar TUDO (incluindo backups antigos)?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(OLD_STORAGE_KEY); 
+        location.reload();
+    }
 });
 
 clearUnusedTimersButton.addEventListener('click', function () {
-    let unusedTimers = [];
-
+    let removedCount = 0;
+    
     for (let timerId in timerStates) {
         const state = timerStates[timerId];
         const isDefaultName = state.nameInput.value === state.initialName;
@@ -344,130 +693,65 @@ clearUnusedTimersButton.addEventListener('click', function () {
         const neverStarted = !state.startTime;
 
         if (isZeroed && neverStarted && isDefaultName) {
-            unusedTimers.push(state.nameInput.value || `Cronômetro ${timerId.split('-')[1]}`);
+            removeTimer(timerId, false);
+            removedCount++;
         }
     }
-
-    if (unusedTimers.length > 0) {
-        let confirmationMessage = `Tem certeza que deseja remover os seguintes cronômetros não utilizados?\n- ${unusedTimers.join('\n- ')}`;
-        if (confirm(confirmationMessage)) {
-            let timersToRemove = Object.keys(timerStates).filter(timerId => {
-                const state = timerStates[timerId];
-                const isDefaultName = state.nameInput.value === state.initialName;
-                const isZeroed = state.display.textContent === '00:00:00';
-                const neverStarted = !state.startTime;
-                return isZeroed && neverStarted && isDefaultName;
-            });
-            timersToRemove.forEach(timerId => {
-                let containerToRemove = timerStates[timerId].container;
-                clearInterval(timerStates[timerId].intervalId);
-                delete activeIntervals[timerId];
-                delete timerStates[timerId];
-                containerToRemove.remove();
-            });
-            updateRemoveButtonsState();
-
-            if (Object.keys(timerStates).length === 0) {
-                createTimer();
-            }
-            saveAllTimers();
-            updateTotalTimeDisplay(); // Atualiza o tempo total
-        }
+    
+    if (removedCount > 0) {
+        alert(`${removedCount} cronômetros vazios removidos.`);
     } else {
-        alert('Não há cronômetros não utilizados para limpar (apenas cronômetros zerados, nunca iniciados e com o nome padrão).');
+        alert('Nenhum cronômetro não utilizado encontrado.');
+    }
+    saveAllData();
+});
+
+
+toggleDragButton.addEventListener('click', function () {
+    if (isDraggingEnabled) {
+        desabilitaSortable();
+    } else {
+        habilitaSortable();
     }
 });
 
+// Event Listeners dos Popups (Versão e Doação)
 versionInfoButton.addEventListener('click', () => {
     versionInfoPopup.style.display = 'flex';
 });
 
-closeButton.addEventListener('click', () => {
-    versionInfoPopup.style.display = 'none';
+donationButton.addEventListener('click', () => {
+    donationPopup.style.display = 'flex';
 });
 
-function updateTimerOrder() {
-    let newTimerStates = {};
-    let timerElements = Array.from(timersContainer.children);
-
-    timerElements.forEach(timerElement => {
-        let timerId = timerElement.id;
-        newTimerStates[timerId] = timerStates[timerId];
-    });
-
-    timerStates = newTimerStates;
-}
-
-function initializeSortable() {
-    sortableInstance = new Sortable(timersContainer, {
-        animation: 300,
-        ghostClass: 'ghost',
-        handle: '.draggable',
-        onEnd: function () {
-            updateTimerOrder();
-            saveAllTimers();
+// Fecha modais ao clicar no X
+closeButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Usa o atributo data-target para saber qual popup fechar
+        const targetId = this.getAttribute('data-target');
+        if (targetId) {
+            document.getElementById(targetId).style.display = 'none';
         }
     });
-}
+});
 
-function habilitaSortable(){
-    Array.from(timersContainer.children).forEach(timer => {
-        timer.classList.add('draggable');
-    });
-
-    isDraggingEnabled = true;
-}
-
-function desabilitaSortable(){
-    Array.from(timersContainer.children).forEach(timer => {
-        timer.classList.remove('draggable');
-    });
-
-    isDraggingEnabled = false;
-}
-
+// Fecha modais ao clicar fora
 window.addEventListener('click', (event) => {
     if (event.target === versionInfoPopup) {
         versionInfoPopup.style.display = 'none';
     }
+    if (event.target === donationPopup) {
+        donationPopup.style.display = 'none';
+    }
 });
 
 window.addEventListener('load', function () {
-    let savedTimers = localStorage.getItem(STORAGE_KEY);
-    timerIdCounter = 0;
-    timersContainer.innerHTML = '';
-
-    if (savedTimers) {
-        let parsedTimers = JSON.parse(savedTimers);
-        if (parsedTimers && parsedTimers.length > 0) {
-            parsedTimers.forEach(timerData => {
-                createTimer(timerData);
-                let idNumber = parseInt(timerData.id.split('-')[1]);
-                if (!isNaN(idNumber)) {
-                    timerIdCounter = Math.max(timerIdCounter, idNumber);
-                }
-            });
-            timerIdCounter++;
-        } else {
-            createTimer();
-        }
+    loadAllData();
+    initializeListSorting(); 
+    
+    if(isDraggingEnabled) {
+        habilitaSortable();
     } else {
-        createTimer();
+        desabilitaSortable();
     }
-    updateRemoveButtonsState();
-    saveAllTimers();
-    updateTotalTimeDisplay(); // Inicializa o tempo total na carga
-
-    initializeSortable(); // Inicializa o SortableJS na carga
-    habilitaSortable();
-
-    toggleDragButton.addEventListener('click', function () {
-        if (isDraggingEnabled) {
-            desabilitaSortable();
-            toggleDragButton.textContent = "Ativar Movimentação";
-        } else {
-            habilitaSortable();
-            toggleDragButton.textContent = "Desativar Movimentação";
-        }
-    });
 });

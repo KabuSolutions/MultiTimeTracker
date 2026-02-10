@@ -14,27 +14,71 @@
 
 <body>
     <div id="versionInfoContainer">
+        <button id="donationButton" title="Apoie-nos">💖</button>
+        <a href="https://github.com/KabuSolutions/MultiTimeTracker/issues" target="_blank" title="Reportar problema ou sugerir melhorias">
+            <button id="bugReportButton">🐞</button>
+        </a>
         <button id="versionInfoButton" title="Informações da Versão">📣</button>
     </div>
 
     <h1>Meus timers</h1>
     <div id="buttonsContainer">
-        <button id="addTimerButton" title="Cria um novo cronômetro">Novo Timer</button>
-        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar timers salvos</button>
+        <button id="addListButton" title="Cria uma nova lista de tarefas">Nova Lista</button>
+        <button id="addTimerButton" title="Cria um novo cronômetro na lista ativa">Novo Timer</button>
+        <button id="clearStorageButton" title="Limpa a memória de timers para uma nova inicialização">Limpar tudo</button>
         <button id="clearUnusedTimersButton" title="Remove todos os cronômetros o qual não foram inicializados">Limpar Não Utilizados</button>
         <button id="toggleDragButton" title="Ativar/Desativar a movimentação dos timers">Desativar Movimentação</button>
-        <div id="totalTimeContainer">
-            <div class="timer-display" id="totalTimeDisplay">00:00:00</div>
+    </div>
+
+    <div id="listsWrapper"></div>
+
+    <footer class="main-footer">
+        Criado por KabuSolutions - 2025 (Atualizado em fevereiro de 2026)
+    </footer>
+
+    <div id="donationPopup" class="popup">
+        <div class="popup-content">
+            <span class="close-button" data-target="donationPopup">&times;</span>
+            
+            <div class="heart-container">
+                <span class="heart-anim">💖</span>
+            </div>
+
+            <h2 style="text-align: center;">Apoie o MultiTimeTracker</h2>
+            
+            <p class="donation-message">
+                Olá! Se esta ferramenta tem ajudado na sua produtividade e organização, considere fazer uma contribuição.<br><br>
+                O MultiTimeTracker é um projeto Open Source mantido com carinho. Sua doação ajuda a manter o desenvolvimento ativo e trazer novas funcionalidades!
+            </p>
+
+            <div class="qr-code-container">
+                <img src="./img/qrcode.png" alt="QR Code para Doação" class="qr-code-img">
+            </div>
+            
+            <p style="text-align: center; font-size: 0.9em; color: #888;">
+                Qualquer valor é bem-vindo e faz a diferença! Obrigado!
+            </p>
         </div>
     </div>
 
-    <div id="timersContainer"></div>
-
     <div id="versionInfoPopup" class="popup">
-        <div class="popup-content">
-            <span class="close-button">&times;</span>
-            <h2>Informações da Versão (0.1.5)</h2>
+        <div class="popup-content" style="display: block;">
+            <span class="close-button" data-target="versionInfoPopup">&times;</span>
+            <h2>Informações da Versão (0.2.0)</h2>
             <h3>Novidades:</h3>
+            <ul>
+                <li>Adicionado importação automática do modelo da versão 0.1.5 para a nova versão.</li>
+                <li>Adicionado suporte para múltiplos grupos de cronômetros.</li>
+                <li>Adicionado suporte para arrastar e soltar os cronômetros entre grupos.</li>
+                <li>Adicionado suporte para arrastar grupos entre si.</li>
+                <li>Adicionado botão de criação de novas listas.</li>
+                <li>Adicionado botão de "reportar um problema ou sugerir melhorias".</li>
+                <li>Adicionado botão de "Apoie-nos" para contribuição voluntária (ajude, ajude o dev).</li>
+                <li>Adicionar um novo cronômetro irá fazer ele aparecer no inicio do grupo em vez do último.</li>
+                <li>Adicionar um novo grupo irá fazer ele aparecer no início da listagem dos grupos em vez do último.</li>
+                <li>Cada grupo agora contém seu próprio cronômetro global.</li>
+            </ul>
+            <h3>0.1.5</h3>
             <ul>
                 <li>Adicionado novo botão para desabilitar/habilitar o modo de movimento dos timers.</li>
                 <li>Alteração do display em decimal para duas casas decimais.</li>
